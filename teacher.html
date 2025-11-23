@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard - Confusion HeatMap</title>
+    <link rel="stylesheet" href="styles.css?v=10">
+    <!-- Firebase SDKs - These are loaded from Google's CDN -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <!-- QRCode library for generating on-page QR codes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body class="teacher">
+    <!-- Create a Room Prompt -->
+    <div id="roomOverlay" class="overlay">
+      <div class="panel">
+        <div class="title">Create a Room</div>
+        <div class="row room-input-row" style="display: flex; justify-content: center; margin-top:8px;">
+          <input id="roomInput" type="text" placeholder="e.g. algebra-101 or room1" style="flex-grow: 1;" />
+          <button id="roomSubmitBtn" class="btn" aria-label="Create Room" title="Create Room" style="flex-grow: 1;">Create Room</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="mainApp" class="container centered" style="display:none;">
+      <div class="card teacher-wrap">
+        <div class="col-left">
+          <div class="row" style="flex-direction: column; align-items: stretch;">
+            <div class="subtle" style="font-weight:600; margin-bottom:6px; display: flex; justify-content: center;">Live responses</div>
+            <div id="bar" class="bar-stack">
+              <div id="barGood" class="bar-seg bar-good" title="Good" style="width:0%"></div>
+              <div id="barNoVote" class="bar-seg bar-novote" title="Haven't voted" style="width:0%"></div>
+              <div id="barConfused" class="bar-seg bar-confused" title="Confused" style="width:0%"></div>
+            </div>
+            <div class="counts">
+              <div><div class="subtle">Good</div><div class="badge good" id="goodCount">0</div></div>
+              <div><div class="subtle">Not voted</div><div class="badge warn" id="noVoteCount">0</div></div>
+              <div><div class="subtle">Confused</div><div class="badge bad" id="confusedCount">0</div></div>
+            </div>
+          </div>
+          <div class="row" style="justify-content:center;">
+            <button class="btn btn-danger" id="resetButton">Reset All Responses</button>
+          </div>
+          
+          <!-- Feedback Section Moved Here -->
+          <div class="feedback-section">
+            <div class="section-header">
+              <h3>Student Feedback</h3>
+            </div>
+            <div id="feedbackList" class="feedback-list">
+              <!-- Feedback items will be added here dynamically -->
+              <div class="no-feedback">No feedback yet</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-right">
+          <div class="topbar">
+            <label class="toggle"><input type="checkbox" id="themeToggle"> Light mode</label>
+          </div>
+          <div class="row" style="justify-content:center; text-align:center;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <div class="subtle" style="font-size:14px; opacity:0.7;">Room</div>
+              <div class="title" id="roomName"></div>
+            </div>
+          </div>
+          <div class="row" style="justify-content:center; margin-bottom: 16px;">
+            <div id="qrcode" class="qr"></div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="firebase.js"></script>
+    <script>
+    (function(){
+      'use strict';
+      // Firebase Realtime Database instance
+      const db = window.firebaseDB;
+
+      // Determine the current room from the URL; no fallback here (overlay handles missing)
+      const params = new URLSearchParams(location.search);
+      const roomParam = (params.get('room') || '').trim();
+      const roomOverlay = document.getElementById('roomOverlay');
+      const roomInput = document.getElementById('roomInput');
+      const roomSubmitBtn = document.getElementById('roomSubmitBtn');
+      const mainApp = document.getElementById('mainApp');
+
+      function sanitizeRoom(name) {
+        return name.replace(/\s+/g,'').replace(/[^a-zA-Z0-9_-]/g,'').slice(0,40) || 'room1';
+      }
+
+      if (!roomParam) {
+        roomOverlay.style.display = 'flex';
+        mainApp.style.display = 'none';
+        setTimeout(() => roomInput && roomInput.focus(), 0);
+      } else {
+        roomOverlay.style.display = 'none';
+        mainApp.style.display = '';
+      }
+
+      const submitRoom = () => {
+        const name = sanitizeRoom(roomInput.value);
+        if (!name) return;
+        const np = new URLSearchParams(location.search);
+        np.set('room', name);
+        location.href = location.pathname + '?' + np.toString();
+      };
+      roomSubmitBtn && roomSubmitBtn.addEventListener('click', submitRoom);
+      roomInput && roomInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitRoom();
+      });
+
+      const room = roomParam || null;
+      if (room) {
+        // Reflect room in UI immediately
+        document.getElementById('roomName').textContent = room;
+        try { document.title = `Teacher — ${room}`; } catch (e) {}
+      }
+
+      // References scoped to the current room (guarded)
+      let responsesRef = null;
+      let presenceRef = null;
+      if (db && room) {
+        responsesRef = db.ref(`rooms/${room}/responses`);
+        presenceRef = db.ref(`rooms/${room}/presence`);
+      }
+
+      /* DOM References */
+      const goodCountSpan = document.getElementById('goodCount');
+      const noVoteCountSpan = document.getElementById('noVoteCount');
+      const confusedCountSpan = document.getElementById('confusedCount');
+      const resetButton = document.getElementById('resetButton');
+      const roomNameEl = document.getElementById('roomName');
+      const qrEl = document.getElementById('qrcode');
+      const barGoodEl = document.getElementById('barGood');
+      const barNoVoteEl = document.getElementById('barNoVote');
+      const barConfusedEl = document.getElementById('barConfused');
+      const themeToggle = document.getElementById('themeToggle');
+      const toastEl = document.getElementById('toast');
+
+      function showToast(msg) {
+        if (!toastEl) return;
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(showToast.tid);
+        showToast.tid = setTimeout(() => toastEl.classList.remove('show'), 1600);
+      }
+
+      // Initialize room display (may be null initially)
+      roomNameEl.textContent = room || '';
+      
+      // Feedback elements
+      const feedbackList = document.getElementById('feedbackList');
+      let feedbackRef = null;
+      
+      // Function to format timestamp
+      function formatTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      
+      // Function to create a feedback element
+      function createFeedbackElement(feedback) {
+        const feedbackEl = document.createElement('div');
+        feedbackEl.className = 'feedback-item';
+        
+        const statusClass = feedback.status === 'good' ? 'good' : (feedback.status === 'confused' ? 'bad' : '');
+        const statusText = feedback.status === 'good' ? 'Got it' : (feedback.status === 'confused' ? 'Confused' : 'No status');
+        
+        feedbackEl.innerHTML = `
+          <div class="feedback-header">
+            <span class="feedback-time">${formatTime(feedback.timestamp)}</span>
+            <span class="feedback-status ${statusClass}">${statusText}</span>
+          </div>
+          <div class="feedback-text">${feedback.text.replace(/\n/g, '<br>')}</div>
+        `;
+        
+        return feedbackEl;
+      }
+      
+      // Function to load feedback
+      function loadFeedback() {
+        if (!room || !db) return;
+        
+        // Clear existing feedback
+        feedbackList.innerHTML = '';
+        
+        // Set up Firebase listener for feedback
+        if (feedbackRef) {
+          feedbackRef.off(); // Remove previous listener if any
+        }
+        
+        feedbackRef = db.ref(`rooms/${room}/feedback`);
+        feedbackRef.orderByChild('timestamp').limitToLast(20).on('value', (snapshot) => {
+          const feedbacks = [];
+          snapshot.forEach((childSnapshot) => {
+            feedbacks.push({
+              id: childSnapshot.key,
+              ...childSnapshot.val()
+            });
+          });
+          
+          // Clear and update feedback list
+          feedbackList.innerHTML = '';
+          
+          if (feedbacks.length === 0) {
+            feedbackList.innerHTML = '<div class="no-feedback">No feedback yet</div>';
+            return;
+          }
+          
+          // Add feedback items in reverse order (newest first)
+          feedbacks.reverse().forEach(feedback => {
+            feedbackList.appendChild(createFeedbackElement(feedback));
+          });
+          
+          // Auto-scroll to bottom
+          feedbackList.scrollTop = feedbackList.scrollHeight;
+        });
+      }
+      
+
+      function nextRoomName(name) {
+        name = String(name || 'room1');
+        const m = name.match(/^(.*?)(\d+)$/);
+        if (!m) return name + '2';
+        const base = m[1];
+        const numStr = m[2];
+        const nextNum = (parseInt(numStr, 10) + 1).toString().padStart(numStr.length, '0');
+        return base + nextNum;
+      }
+
+      function setQRText(text) {
+        qrEl.innerHTML = '';
+        try { new QRCode(qrEl, { text, width: 180, height: 180 }); } catch (e) {}
+      }
+
+      function buildStudentUrl(r) {
+        return `${location.origin}/student.html?room=${encodeURIComponent(r)}&new=1`;
+      }
+
+      // Set QR for current room once and load feedback
+      if (room) {
+        try { 
+          setQRText(buildStudentUrl(room));
+          loadFeedback();
+        } catch (e) {
+          console.error('Error initializing room:', e);
+        }
+      }
+
+      // No capacity/auto-advance controls
+
+      // Cache snapshots to combine presence and responses
+      let lastPresence = null;
+      let lastResponses = null;
+
+      function recomputeAndRender() {
+        if (!room) return;
+        let goodCount = 0;
+        let confusedCount = 0;
+        if (lastResponses) {
+          for (const studentID in lastResponses) {
+            const v = lastResponses[studentID];
+            // Handle both old format (direct status) and new format (object with status)
+            const status = (typeof v === 'object' && v.status) ? v.status : v;
+            if (status === 'good') goodCount++;
+            else if (status === 'confused') confusedCount++;
+          }
+        }
+        const totalPresent = lastPresence ? Object.keys(lastPresence).length : 0;
+        const voted = goodCount + confusedCount;
+        const noVote = Math.max(totalPresent - voted, 0);
+        const denom = Math.max(totalPresent, 1);
+
+        goodCountSpan.textContent = goodCount;
+        confusedCountSpan.textContent = confusedCount;
+        noVoteCountSpan.textContent = noVote;
+
+        const goodPct = (goodCount / denom) * 100;
+        const noVotePct = (noVote / denom) * 100;
+        const confusedPct = (confusedCount / denom) * 100;
+        barGoodEl.style.width = goodPct.toFixed(2) + '%';
+        barNoVoteEl.style.width = noVotePct.toFixed(2) + '%';
+        barConfusedEl.style.width = confusedPct.toFixed(2) + '%';
+
+        // QR remains static for current room, no rerendering
+      }
+
+      if (!db) {
+        console.error('Firebase DB not initialized.');
+        showToast('Firebase not available');
+      }
+
+      try {
+        room && presenceRef && presenceRef.on('value', (snap) => {
+          lastPresence = snap.val();
+          recomputeAndRender();
+        }, (err) => { console.error('Presence read error:', err); });
+      } catch (e) { console.error('Presence listener error:', e); }
+
+      room && responsesRef && responsesRef.on('value', (snapshot) => {
+        lastResponses = snapshot.val();
+        recomputeAndRender();
+      }, (error) => { console.error('Error reading data:', error); });
+
+      resetButton.addEventListener('click', async () => {
+        if (!room) { showToast('Select a room first'); return; }
+        resetButton.disabled = true;
+        try {
+          // Clear both responses and feedback
+          const updates = {};
+          updates[`rooms/${room}/responses`] = null;
+          updates[`rooms/${room}/feedback`] = null;
+          
+          await db.ref().update(updates);
+          showToast('All responses and feedback cleared');
+        } catch (error) {
+          console.error('Error clearing data:', error);
+          showToast('Reset failed');
+        } finally {
+          resetButton.disabled = false;
+        }
+      });
+
+      // Theme (saved to localStorage)
+      (function initTheme(){
+        const saved = localStorage.getItem('theme') || 'dark';
+        if (saved === 'light') {
+          document.documentElement.setAttribute('data-theme','light');
+          themeToggle.checked = true;
+        }
+        themeToggle.addEventListener('change', () => {
+          const light = themeToggle.checked;
+          if (light) {
+            document.documentElement.setAttribute('data-theme','light');
+            localStorage.setItem('theme','light');
+          } else {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme','dark');
+          }
+        });
+      })();
+    })();
+    </script>
+</body>
+</html>

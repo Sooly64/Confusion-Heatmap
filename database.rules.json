@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "rooms": {
+      "$room": {
+        ".read": true,
+        ".write": true,
+        "responses": {
+          ".indexOn": ["status", "timestamp"]
+        },
+        "feedback": {
+          ".indexOn": ["timestamp"]
+        }
+      }
+    }
+  }
+}
