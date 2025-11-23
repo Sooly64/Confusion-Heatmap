@@ -55,9 +55,6 @@
           </div>
         </div>
         <div class="col-right">
-          <div class="topbar">
-            <label class="toggle"><input type="checkbox" id="themeToggle"> Light mode</label>
-          </div>
           <div class="row" style="justify-content:center; text-align:center;">
             <div style="display:flex; flex-direction:column; align-items:center;">
               <div class="subtle" style="font-size:14px; opacity:0.7;">Room</div>
@@ -137,7 +134,6 @@
       const barGoodEl = document.getElementById('barGood');
       const barNoVoteEl = document.getElementById('barNoVote');
       const barConfusedEl = document.getElementById('barConfused');
-      const themeToggle = document.getElementById('themeToggle');
       const toastEl = document.getElementById('toast');
 
       function showToast(msg) {
@@ -324,25 +320,6 @@
           resetButton.disabled = false;
         }
       });
-
-      // Theme (saved to localStorage)
-      (function initTheme(){
-        const saved = localStorage.getItem('theme') || 'dark';
-        if (saved === 'light') {
-          document.documentElement.setAttribute('data-theme','light');
-          themeToggle.checked = true;
-        }
-        themeToggle.addEventListener('change', () => {
-          const light = themeToggle.checked;
-          if (light) {
-            document.documentElement.setAttribute('data-theme','light');
-            localStorage.setItem('theme','light');
-          } else {
-            document.documentElement.removeAttribute('data-theme');
-            localStorage.setItem('theme','dark');
-          }
-        });
-      })();
     })();
     </script>
 </body>
