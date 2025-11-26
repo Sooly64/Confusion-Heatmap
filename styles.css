@@ -86,8 +86,16 @@ body.teacher { height: 100dvh; overflow: hidden; }
   border: 1px solid #d1d5db !important;
 }
 
-html, body { height: 100%; margin: 0; overflow: hidden; }
+html, body { height: 100%; margin: 0; }
 html { background: var(--bg); }
+
+/* Mobile: allow scrolling, Desktop: prevent scrolling */
+@media (max-width: 768px) {
+  body.student { overflow: auto; }
+}
+@media (min-width: 769px) {
+  body.student { overflow: hidden; }
+}
 
 body {
   margin: 0;
