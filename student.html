@@ -51,24 +51,10 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+  <script src="firebase.js"></script>
   <script>
-    // Initialize Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyBy_CWtXNdq3_AXxSQCbihEIFzUYKFIvXA",
-      authDomain: "confusion-heatmap.firebaseapp.com",
-      databaseURL: "https://confusion-heatmap-default-rtdb.firebaseio.com",
-      projectId: "confusion-heatmap",
-      storageBucket: "confusion-heatmap.appspot.com",
-      messagingSenderId: "353547433876",
-      appId: "1:353547433876:web:42aabd79404c1ae2734181"
-    };
-    
-    // Initialize Firebase
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-    
-    const db = firebase.database();
+    // Firebase Realtime Database instance
+    const db = window.firebaseDB;
     const toastEl = document.getElementById('toast');
 
     // UI Elements
