@@ -78,7 +78,7 @@ body {
   background: #a4695b;
   transform: rotate(45deg);
   pointer-events: none;
-  z-index: 1;
+  z-index: -1;
 }
 
 .streak-right {
@@ -90,7 +90,7 @@ body {
   background: #a4695b;
   transform: rotate(45deg);
   pointer-events: none;
-  z-index: 1;
+  z-index: -1;
 }
 
 /* Dark mode streaks */
