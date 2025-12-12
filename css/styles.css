@@ -21,18 +21,101 @@ body.teacher { height: 100dvh; overflow: hidden; }
   box-sizing: border-box;
 }
 
-/* Base theme */
+/* Base theme - Light mode is now default */
 :root {
-  --bg: #0b0f1f;
-  --panel: #11162a;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --good: #10b981;
-  --confused: #ef4444;
-  --novote: #9ca3af;
-  --accent: #3b82f6;
-  --border: rgba(255, 255, 255, 0.1);
-  --input-bg: rgba(255, 255, 255, 0.05);
+  /* Light theme colors - New color scheme */
+  --bg-light: #d8c1b0;
+  --panel-light: #f5f0ed;
+  --text-light: #2b1c1e;
+  --muted-light: #5e2c31;
+  --good-light: #8c3f3b;
+  --confused-light: #8c3f3b;
+  --novote-light: #d8c1b0;
+  --accent-light: #8c3f3b;
+  --border-light: #a4695b;
+  --input-bg-light: #f5f0ed;
+  
+  /* Dark theme colors - Darker versions */
+  --bg-dark: #46272a;
+  --panel-dark: #5e2c31;
+  --text-dark: #d8c1b0;
+  --muted-dark: #a4695b;
+  --good-dark: #8c3f3b;
+  --confused-dark: #8c3f3b;
+  --novote-dark: #5e2c31;
+  --accent-dark: #d8c1b0;
+  --border-dark: rgba(216, 193, 176, 0.2);
+  --input-bg-dark: rgba(94, 44, 49, 0.3);
+  
+  /* Default to light theme */
+  --bg: #d8c1b0;
+  --panel: #f5f0ed;
+  --text: #2b1c1e;
+  --muted: #5e2c31;
+  --good: #8c3f3b;
+  --confused: #a4695b;
+  --novote: #d8c1b0;
+  --accent: #8c3f3b;
+  --border: #a4695b;
+  --input-bg: #f5f0ed;
+}
+
+/* Force override test - make sure colors are applied */
+body {
+  background: var(--bg) !important;
+  color: var(--text) !important;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Artistic background streaks - solid colors facing northeast */
+.streak-left {
+  position: fixed;
+  top: -30%;
+  left: -5%;
+  width: 8%;
+  height: 160%;
+  background: #a4695b;
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.streak-right {
+  position: fixed;
+  top: -10%;
+  right: -5%;
+  width: 8%;
+  height: 160%;
+  background: #a4695b;
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Dark mode streaks */
+[data-theme="dark"] .streak-left {
+  background: #d8c1b0;
+}
+
+[data-theme="dark"] .streak-right {
+  background: #d8c1b0;
+}
+
+.container {
+  background: var(--bg) !important;
+}
+
+.card {
+  background: var(--panel) !important;
+}
+
+.home-container {
+  background: var(--bg) !important;
+}
+
+.home-card {
+  background: var(--panel) !important;
 }
 
 /* Fullscreen overlay (teacher room prompt) */
@@ -63,27 +146,55 @@ body.teacher { height: 100dvh; overflow: hidden; }
   color: var(--text);
 }
 
-[data-theme="light"] {
-  --bg: #f7f7fb;
-  --panel: #ffffff;
-  --text: #0f172a;
-  --muted: #475569;
-  --good: #16a34a;
-  --confused: #dc2626;
-  --novote: #6b7280;
-  --accent: #2563eb;
+/* Dark theme override */
+[data-theme="dark"] {
+  --bg: var(--bg-dark);
+  --panel: var(--panel-dark);
+  --text: var(--text-dark);
+  --muted: var(--muted-dark);
+  --good: var(--good-dark);
+  --confused: var(--confused-dark);
+  --novote: #d8c1b0;
+  --accent: var(--accent-dark);
+  --border: var(--border-dark);
+  --input-bg: var(--input-bg-dark);
 }
 
-[data-theme="light"] .bar-stack {
-  border: 1px solid #d1d5db !important;
+/* Keep subtitles #d8c1b0 in dark mode */
+[data-theme="dark"] .home-subtitle,
+[data-theme="dark"] .subtle,
+[data-theme="dark"] .action-card p {
+  color: #d8c1b0 !important;
 }
 
-[data-theme="light"] input[type="text"] {
-  border: 1px solid #d1d5db !important;
+/* Keep button text #d8c1b0 in dark mode */
+[data-theme="dark"] .btn,
+[data-theme="dark"] .btn-primary,
+[data-theme="dark"] .btn-secondary {
+  color: #d8c1b0 !important;
 }
 
-[data-theme="light"] .btn {
-  border: 1px solid #d1d5db !important;
+/* Keep room status text #d8c1b0 in dark mode */
+[data-theme="dark"] .room-status {
+  color: #d8c1b0 !important;
+}
+
+/* Center modal titles */
+.modal-header h2 {
+  text-align: center;
+}
+
+/* Default theme styling (previously light theme) */
+.bar-stack {
+  border: 1px solid var(--border) !important;
+}
+
+input[type="text"] {
+  border: 1px solid var(--border) !important;
+}
+
+.btn {
+  border: 1px solid var(--border) !important;
 }
 
 html, body { height: 100%; margin: 0; }
@@ -92,9 +203,11 @@ html { background: var(--bg); }
 /* Mobile: allow scrolling, Desktop: prevent scrolling */
 @media (max-width: 768px) {
   body.student { overflow: auto; }
+  body:not(.teacher) { overflow: auto; }
 }
 @media (min-width: 769px) {
   body.student { overflow: hidden; }
+  body:not(.teacher) { overflow: hidden; }
 }
 
 body {
@@ -105,9 +218,6 @@ body {
 }
 
 /* Remove all glow layers */
-
-/* Light mode: solid background only */
-[data-theme="light"] body { background: var(--bg); }
 
 /* Layout */
 .container {
@@ -218,19 +328,19 @@ body {
 }
 .btn:hover { filter: brightness(1.08); }
 .btn:active { transform: translateY(1px) scale(0.99); }
-.btn-primary { background: linear-gradient(180deg, rgba(59,130,246,0.35), rgba(59,130,246,0.18)); border-color: rgba(59,130,246,0.45); }
+.btn-primary { background: linear-gradient(180deg, rgba(140, 63, 59, 0.35), rgba(140, 63, 59, 0.18)); border-color: rgba(140, 63, 59, 0.45); }
 .btn-danger {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: var(--confused);
+  border-color: var(--confused);
   color: #fff;
 }
 .btn-danger:hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: #8c3f3b;
+  border-color: #8c3f3b;
 }
 .btn-danger:active {
-  background: #b91c1c;
-  border-color: #b91c1c;
+  background: #5e2c31;
+  border-color: #5e2c31;
 }
 .btn-danger:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -273,8 +383,8 @@ body {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  border: 1px solid #3b82f6;
-  background: #3b82f6;
+  border: 1px solid var(--accent);
+  background: var(--accent);
   color: #fff;
   cursor: pointer;
   transition: transform 0.06s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
@@ -305,9 +415,9 @@ body {
   border: 1px solid rgba(255,255,255,0.08);
 }
 .bar-seg { height: 100%; transition: width 350ms ease; }
-.bar-good { background: var(--good); }
-.bar-novote { background: var(--novote); }
-.bar-confused { background: var(--confused); }
+.bar-good { background: #9dffc1 !important; }
+.bar-novote { background: #d8c1b0 !important; }
+.bar-confused { background: #ff9e9e !important; }
 
 .counts {
   display: grid;
@@ -318,9 +428,9 @@ body {
   text-align: center;
 }
 .badge { font-weight: 700; }
-.good { color: var(--good); }
-.warn { color: var(--novote); }
-.bad { color: var(--confused); }
+.good { color: #d8c1b0 !important; }
+.warn { color: #d8c1b0 !important; }
+.bad { color: #d8c1b0 !important; }
 
 /* Student UI */
 .student {
@@ -417,15 +527,23 @@ body {
 }
 
 .feedback-btn.good {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.2);
-  color: var(--good);
+  background: #d8c1b0 !important;
+  border-color: #d8c1b0 !important;
+  color: var(--good) !important;
+}
+
+.feedback-btn.good .material-icons {
+  color: var(--good) !important;
 }
 
 .feedback-btn.confused {
-  background: rgba(239, 68, 68, 0.1);
-  border-color: rgba(239, 68, 68, 0.2);
-  color: var(--confused);
+  background: #8c3f3b !important;
+  border-color: #8c3f3b !important;
+  color: #d8c1b0 !important;
+}
+
+.feedback-btn.confused .material-icons {
+  color: #d8c1b0 !important;
 }
 
 .feedback-btn:active {
@@ -441,7 +559,7 @@ body {
   align-items: center;
   text-align: center;
   margin: 24px 0;
-  color: var(--muted);
+  color: #d8c1b0 !important;
   font-size: 14px;
 }
 
@@ -470,13 +588,38 @@ body {
   border-radius: 10px;
   margin-bottom: 12px;
   font-family: inherit;
-  color: var(--text);
+  color: #d8c1b0 !important;
   min-height: 100px;
   max-height: 200px;
   resize: none;
   box-sizing: border-box;
   transition: border-color 0.2s ease;
   outline: none;
+}
+
+/* Fix light mode student page text colors */
+.student-container,
+.feedback-note textarea,
+.feedback-note textarea::placeholder,
+.divider {
+  color: var(--good) !important;
+}
+
+/* Fix send button text color in light mode */
+#sendFeedbackBtn {
+  color: #d8c1b0 !important;
+}
+
+/* Keep text colors consistent in dark mode */
+[data-theme="dark"] .student-container,
+[data-theme="dark"] .feedback-note textarea,
+[data-theme="dark"] .feedback-note textarea::placeholder,
+[data-theme="dark"] .divider {
+  color: #d8c1b0 !important;
+}
+
+[data-theme="dark"] #sendFeedbackBtn {
+  color: #d8c1b0 !important;
 }
 
 .feedback-note textarea:focus {
@@ -493,9 +636,9 @@ body {
 .feedback-note .btn {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(180deg, rgba(59,130,246,0.35), rgba(59,130,246,0.18));
-  color: var(--text);
-  border: 1px solid rgba(59,130,246,0.45);
+  background: var(--good) !important;
+  color: white !important;
+  border: 1px solid var(--good) !important;
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
@@ -509,7 +652,7 @@ body {
   cursor: not-allowed;
 }
 
-/* Info Panel */
+/* Info Panel - original overlay style */
 .info-panel {
   position: fixed;
   top: 0;
@@ -564,9 +707,9 @@ body {
 }
 
 .btn-text {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: var(--text);
+  background: var(--good) !important;
+  border: 1px solid var(--good) !important;
+  color: white !important;
   font-weight: 600;
   padding: 10px 16px;
   border-radius: 8px;
@@ -686,11 +829,11 @@ body {
 }
 
 .feedback-status.good {
-  color: var(--good);
+  color: #d8c1b0 !important;
 }
 
 .feedback-status.bad {
-  color: var(--confused);
+  color: #d8c1b0 !important;
 }
 
 .feedback-text {
@@ -709,18 +852,18 @@ body {
   font-size: 14px;
 }
 
-/* Light mode adjustments */
-[data-theme="light"] .feedback-section {
+/* Default theme adjustments */
+.feedback-section {
   background: rgba(0, 0, 0, 0.03);
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-[data-theme="light"] .feedback-item {
+.feedback-item {
   background: rgba(0, 0, 0, 0.02);
   border-left-color: var(--muted);
 }
 
-[data-theme="light"] .feedback-text {
+.feedback-text {
   color: var(--text);
 }
 
@@ -782,9 +925,9 @@ body.no-scroll { height: 100svh; overflow: hidden; }
 
 /* Remove title glow entirely */
 #roomName { position: relative; }
-[data-theme="light"] .toggle input[type="checkbox"]:checked {
-  background: linear-gradient(180deg, rgba(16,185,129,0.9), rgba(5,150,105,0.9));
-  border-color: rgba(16,185,129,0.95);
+.toggle input[type="checkbox"]:checked {
+  background: linear-gradient(180deg, var(--good), var(--confused));
+  border-color: var(--good);
 }
 
 /* Hide any footer if present */
@@ -819,8 +962,8 @@ footer { display: none; }
   transition: left 200ms ease;
 }
 .toggle input[type="checkbox"]:checked {
-  background: linear-gradient(180deg, rgba(59,130,246,0.85), rgba(37,99,235,0.85));
-  border-color: rgba(59,130,246,0.9);
+  background: linear-gradient(180deg, rgba(140, 63, 59, 0.85), rgba(94, 44, 49, 0.85));
+  border-color: rgba(140, 63, 59, 0.9);
 }
 .toggle input[type="checkbox"]:checked::after {
   left: 23px;

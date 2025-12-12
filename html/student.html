@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confusion Check</title>
+  <link rel="stylesheet" href="../css/styles.css?v=21">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body class="student">
+  <button id="infoBtn" class="icon-btn info-btn" aria-label="How this works">
+    <span class="material-icons">help_outline</span>
+  </button>
+  <div class="student-container">
+    <div class="student-card">
+      <div class="feedback-buttons">
+        <button id="goodBtn" class="feedback-btn good" aria-label="I understand">
+          <span class="material-icons">check_circle</span>
+          <span>Got it!</span>
+        </button>
+        <button id="confusedBtn" class="feedback-btn confused" aria-label="I'm confused">
+          <span class="material-icons">help</span>
+          <span>Confused</span>
+        </button>
+      </div>
+
+      <div class="divider">
+        <span>or leave a note</span>
+      </div>
+
+      <div class="feedback-note">
+        <textarea id="feedbackInput" placeholder="Type your question or comment here (anonymous)" rows="3"></textarea>
+        <button id="sendFeedbackBtn" class="btn" disabled>Send</button>
+      </div>
+    </div>
+
+    <div id="infoPanel" class="info-panel" hidden>
+      <div class="info-content">
+        <h3>How It Works</h3>
+        <ul>
+          <li>Click <strong>Got it!</strong> if you understand the material</li>
+          <li>Click <strong>I'm confused</strong> if you need help</li>
+          <li>Use the text box to send anonymous feedback</li>
+        </ul>
+        <button id="closeInfoBtn" class="btn-text">Got it!</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="../js/firebase.js"></script>
+    <script src="../js/student.js"></script>
+</body>
+</html>

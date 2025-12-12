@@ -7,12 +7,17 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>ConfusionMeter - Real-time Student Feedback</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="css/styles.css?v=13">
+    <link rel="stylesheet" href="css/index.css?v=12">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 </head>
-<body>
+<body class="home">
+    <!-- Background streaks -->
+    <div class="streak-left"></div>
+    <div class="streak-right"></div>
+    
     <div class="home-container">
         <div class="home-card">
             <!-- Theme Toggle -->
@@ -29,7 +34,7 @@
                     <span class="material-icons" style="font-size: 48px; margin-bottom: 16px;">psychology</span>
                     Welcome to ConfusionMeter
                 </h1>
-                <p class="home-subtitle">Real-time student feedback made simple</p>
+                <p class="home-subtitle">Real-time student feedback made easy</p>
             </div>
 
             <!-- Action Buttons -->
@@ -48,11 +53,8 @@
                         <span class="material-icons">login</span>
                         Student
                     </h3>
-                    <p>Join a room and share your feedback</p>
-                    <div class="join-room">
-                        <input id="roomInput" type="text" placeholder="Enter room name" />
-                        <button id="joinRoomBtn" class="btn btn-secondary">Join Room</button>
-                    </div>
+                    <p>Join a room and share any feedback anonymously</p>
+                    <button id="studentBtn" class="btn btn-secondary">I am a Student</button>
                 </div>
             </div>
         </div>
@@ -74,276 +76,23 @@
         </div>
     </div>
 
-    <script src="firebase.js"></script>
-    <script>
-        // Firebase Realtime Database instance
-        const db = window.firebaseDB;
+    <!-- Student Room Selection Modal -->
+    <div id="studentRoomModal" class="overlay" style="display: none;">
+        <div class="panel">
+            <div class="modal-header">
+                <h2>Select a Room</h2>
+                <button id="closeStudentModalBtn" class="icon-btn">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="modal-content">
+                <div id="roomsList" class="rooms-list">
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // DOM Elements
-        const themeToggle = document.getElementById('themeToggle');
-        const createRoomBtn = document.getElementById('createRoomBtn');
-        const joinRoomBtn = document.getElementById('joinRoomBtn');
-        const roomInput = document.getElementById('roomInput');
-        const createRoomModal = document.getElementById('createRoomModal');
-        const closeModalBtn = document.getElementById('closeModalBtn');
-        const newRoomInput = document.getElementById('newRoomInput');
-        const confirmCreateBtn = document.getElementById('confirmCreateBtn');
-
-        // Theme management
-        function initTheme() {
-            const saved = localStorage.getItem('theme') || 'dark';
-            if (saved === 'light') {
-                document.documentElement.setAttribute('data-theme', 'light');
-                themeToggle.checked = true;
-            }
-        }
-
-        themeToggle.addEventListener('change', () => {
-            const light = themeToggle.checked;
-            if (light) {
-                document.documentElement.setAttribute('data-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-                localStorage.setItem('theme', 'dark');
-            }
-        });
-
-        // Room name sanitization
-        function sanitizeRoom(name) {
-            return name.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'room1';
-        }
-
-        // Create room functionality
-        createRoomBtn.addEventListener('click', () => {
-            createRoomModal.style.display = 'flex';
-            newRoomInput.focus();
-        });
-
-        closeModalBtn.addEventListener('click', () => {
-            createRoomModal.style.display = 'none';
-            newRoomInput.value = '';
-        });
-
-        confirmCreateBtn.addEventListener('click', () => {
-            const roomName = sanitizeRoom(newRoomInput.value);
-            if (roomName) {
-                window.location.href = `teacher.html?room=${encodeURIComponent(roomName)}`;
-            }
-        });
-
-        newRoomInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                confirmCreateBtn.click();
-            }
-        });
-
-        // Join room functionality
-        joinRoomBtn.addEventListener('click', () => {
-            const roomName = sanitizeRoom(roomInput.value);
-            if (roomName) {
-                window.location.href = `student.html?room=${encodeURIComponent(roomName)}`;
-            }
-        });
-
-        roomInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                joinRoomBtn.click();
-            }
-        });
-
-        // Close modal when clicking outside
-        createRoomModal.addEventListener('click', (e) => {
-            if (e.target === createRoomModal) {
-                closeModalBtn.click();
-            }
-        });
-
-        // Initialize theme on load
-        initTheme();
-    </script>
-
-    <style>
-        .home-container {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 24px;
-            background: var(--bg);
-        }
-
-        .home-card {
-            background: var(--panel);
-            border-radius: 20px;
-            padding: 48px;
-            max-width: 600px;
-            width: 100%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-
-        .theme-toggle-container {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-        }
-
-        .welcome-section {
-            text-align: center;
-            margin-bottom: 48px;
-        }
-
-        .home-title {
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .home-subtitle {
-            font-size: 18px;
-            color: var(--muted);
-            margin: 16px 0 0 0;
-        }
-
-        .action-section {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
-
-        .action-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .action-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-card h3 {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 20px;
-            color: var(--text);
-            margin: 0 0 8px 0;
-        }
-
-        .action-card p {
-            color: var(--muted);
-            margin: 0 0 20px 0;
-            font-size: 14px;
-        }
-
-        .join-room {
-            display: flex;
-            gap: 8px;
-        }
-
-        .join-room input {
-            flex: 1;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-        }
-
-        .btn-secondary {
-            background: var(--good);
-            color: white;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-            color: var(--text);
-        }
-
-        .modal-content {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
-
-        .modal-content input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            background: var(--input-bg);
-            color: var(--text);
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-
-        .modal-content input:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-        }
-
-        .modal-content .btn {
-            width: 100%;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .modal-content .btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: var(--muted);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 8px;
-            transition: background-color 0.2s ease;
-        }
-
-        .icon-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        @media (max-width: 640px) {
-            .action-section {
-                grid-template-columns: 1fr;
-            }
-            
-            .home-card {
-                padding: 32px 24px;
-            }
-            
-            .theme-toggle-container {
-                position: static;
-                margin-bottom: 24px;
-                text-align: right;
-            }
-        }
-    </style>
+    <script src="js/firebase.js"></script>
+    <script src="js/index.js"></script>
 </body>
 </html>
