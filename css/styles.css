@@ -867,6 +867,14 @@ body {
   color: var(--text);
 }
 
+/* Hide streaks on mobile */
+@media (max-width: 768px) {
+  .streak-left,
+  .streak-right {
+    display: none;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .feedback-section {
